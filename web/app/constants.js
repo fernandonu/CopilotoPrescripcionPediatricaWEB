@@ -43,18 +43,20 @@ RESTRICCIONES
 export const CLINICAL_EXAMPLES = [
   {
     id: 1,
-    title: "Caso 1: Lactante con Bronquiolitis y CIV (Cardiopatía Congénita)",
-    summary: "Lactante de 8 meses (7.2 kg) con bronquiolitis por VRS (5 días de evolución) y Comunicación Interventricular (CIV) pequeña. Presenta taquipnea, retracción costal moderada y sibilancias bilaterales. SatO2 91% en aire ambiente. Frecuencia cardíaca: 142 lpm. Recibe Salbutamol aerosol 2 puffs c/4h, Paracetamol gotas 70 mg c/6h si fiebre y Furosemida 7 mg VO c/12h.",
-    text: `Paciente: Lactante de 8 meses
-Peso: 7.2 kg
-Diagnóstico: Bronquiolitis por VRS (5 días de evolución) + Cardiopatía Congénita (Comunicación Interventricular - CIV pequeña).
-Evolución clínica: Ingresó por taquipnea y retracción costal moderada. Presenta picos febriles y dificultad para alimentarse. Hoy cursa con sibilancias bilaterales y saturación de oxígeno de 91% en aire ambiente. Frecuencia cardíaca: 142 lpm.
+    title: "Caso 1: Paciente de 4 años en Post-Trasplante de Médula Ósea (TMO) con Neutropenia e Hipogammaglobulinemia",
+    summary: "Paciente de 4 años (16 kg) en Día +15 de Trasplante alogénico de Células Progenitoras Hematopoyéticas por LLA en recaída. Presenta neutropenia profunda (RAN 80 cel/mm³), mucositis oral grado II, y catéter venoso central (CVC) trilumen. Laboratorio reporta IgG sérica de 280 mg/dL (hipogammaglobulinemia secundaria severa). Se encuentra afebril. Se evalúa profilaxis antibacteriana y reposición de inmunoglobulina.",
+    text: `Paciente: Preescolar de 4 años
+Peso: 16 kg
+Diagnóstico: Día +15 de Trasplante de Células Progenitoras Hematopoyéticas (TCPH/TMO) alogénico por LLA en recaída + Neutropenia profunda + Mucositis oral grado II + Catéter Venoso Central (CVC) trilumen.
+Evolución clínica: Paciente en fase previa al prendimiento (pre-engraftment). Actualmente afebril, pero con dolor moderado por mucositis oral. Se constató hipogammaglobulinemia secundaria severa en el laboratorio de hoy.
 Medicación activa:
-- Salbutamol aerosol 100 mcg: 2 puffs cada 4 horas.
-- Paracetamol gotas (100 mg/mL): 0.7 mL (70 mg) cada 6 horas condicionado a fiebre.
-- Furosemida: 7 mg vía oral cada 12 horas (por su CIV).
+- Aciclovir: 160 mg vía oral cada 8 horas (prevención de reactivación de VHS).
+- Trimetoprima-Sulfametoxazol (suspensión 40/200 mg en 5 mL): 10 mL (80 mg de TMP) vía oral los días lunes, miércoles y viernes (profilaxis de Pneumocystis jirovecii).
+- Posaconazol suspensión (40 mg/mL): 5 mL (200 mg) vía oral cada 8 horas (profilaxis antifúngica).
+- Profilaxis antibacteriana: En evaluación por el equipo de trasplante debido a neutropenia profunda.
+- Reposición de inmunoglobulina: En evaluación por dosaje bajo de IgG sérica.
 Alergias: Sin alergias conocidas.
-Laboratorios recientes: PCR 12 mg/L, Creatinina 0.3 mg/dL, electrolitos séricos en rango normal.`
+Laboratorios recientes: Leucocitos 300/mm³, RAN (Recuento Absoluto de Neutrófilos) 80/mm³, Plaquetas 25,000/mm³, Creatinina 0.4 mg/dL, IgG sérica 280 mg/dL (Valor de referencia normal: > 500 mg/dL).`
   },
   {
     id: 2,

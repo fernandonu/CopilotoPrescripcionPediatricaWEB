@@ -1,4 +1,18 @@
 import OpenAI from 'openai';
+import fs from 'fs/promises';
+import path from 'path';
+import { AGENT_INSTRUCTIONS } from '../../constants';
+
+const FILE_PATH = path.join(process.cwd(), 'instructions.txt');
+
+async function getInstructions() {
+  try {
+    return await fs.readFile(FILE_PATH, 'utf-8');
+  } catch (error) {
+    return AGENT_INSTRUCTIONS;
+  }
+}
+
 
 export async function POST(request) {
   try {
@@ -43,49 +57,7 @@ export async function POST(request) {
           ]
         }
       ],
-      instructions: `
-        Eres un Farmacéutico Clínico Pediátrico.
-
-        Analiza el contexto clínico recibido y genera recomendaciones farmacoterapéuticas para el paciente actual.
-
-        REGLAS
-
-        * Utiliza exclusivamente información recuperada mediante File Search.
-        * Toda recomendación debe incluir respaldo documental.
-        * No utilices conocimiento propio.
-        * No infieras información ausente.
-        * Si no existe evidencia documental suficiente responde únicamente:
-          "Sin recomendaciones farmacoterapéuticas documentadas."
-
-        PRIORIZAR
-
-        1. Seguridad.
-        2. Interacciones.
-        3. Ajustes de dosis.
-        4. Monitoreo.
-        5. Recomendaciones terapéuticas.
-
-        RESPUESTA
-
-        REC
-
-        * Medicamento | Dosis | Intervalo | Vía
-
-        ALERTAS
-
-        * Riesgo, interacción, ajuste o monitoreo.
-
-        FUENTE
-
-        * Documento | Sección.
-
-        RESTRICCIONES
-
-        * Máximo 3 recomendaciones.
-        * Máximo 100 palabras.
-        * Sin introducciones ni conclusiones.
-        * No repetir información.
-    `,
+      instructions: await getInstructions(),
       input: input,
       stream: true,
     });
