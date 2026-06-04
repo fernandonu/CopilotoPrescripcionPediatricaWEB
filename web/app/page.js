@@ -16,7 +16,7 @@ export default function Home() {
 
     setLoading(true);
     setError("");
-    setResponse(null);
+    setResponse("");
 
     try {
       const res = await fetch("/api/prescribe", {
@@ -25,13 +25,25 @@ export default function Home() {
         body: JSON.stringify({ input }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || "Ocurrió un error al procesar la consulta.");
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Ocurrió un error al procesar la consulta.");
       }
 
-      setResponse(data.text);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let accumulatedText = "";
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunkValue = decoder.decode(value);
+          accumulatedText += chunkValue;
+          setResponse(accumulatedText);
+        }
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -44,8 +56,15 @@ export default function Home() {
       <div className={styles.header}>
         <h1 className={styles.title}>Copiloto Pediátrico</h1>
         <p className={styles.subtitle}>
-          Asistencia rápida y segura para la prescripción farmacoterapéutica
-        </p>
+          Asistencia rápida y segura para la prescripción pediatrica farmacoterapéutica.
+          <br />
+          Este asistente se ejecuta al momento de abrir la herramienta de prescripción.
+          <br />
+          Genera recomendaciones en base a la información disponible en la historia clínica del paciente.
+          <br />
+          Tomo como base las recomendaciones las guias, tablas, boletines y procedimientos dispobles en la intranet del hospital.
+          <br />
+          OTRO ASISTENTE SE PODRIA EJECUTAR PARA VALIDAR LA PRESCRIPCION, ESTO ES UNA VEZ QUE SUCEDA EL EVENTO DE PRESCRIPCION.        </p>
       </div>
 
       <div className={styles.container}>
@@ -53,7 +72,9 @@ export default function Home() {
           <div className={styles.inputGroup}>
             <textarea
               className={styles.textarea}
-              placeholder="Aca van los datos de la HC&#10;(Presiona Enter para enviar, Shift+Enter para nueva línea)"
+              placeholder="Para simular, acá van los datos de la HC. Dentro del modulo de prescripcion seria datos del paciente obtenidos mediante Query. El resumen podria contener: Problemas activos.
+                            Medicación activa. Últimos laboratorios relevantes. Alergias. Peso. Edad.
+                            Diagnósticos SNOMED activos. Procedimientos recientes.&#10;(Presiona Enter para enviar, Shift+Enter para nueva línea)"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
