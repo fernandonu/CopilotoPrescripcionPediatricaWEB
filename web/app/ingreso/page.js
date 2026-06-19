@@ -22,6 +22,11 @@ export default function IngresoClinico() {
   const [savingInstructions, setSavingInstructions] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
 
+  const [examples, setExamples] = useState(CLINICAL_EXAMPLES_INGRESO);
+  const [examplesEditMode, setExamplesEditMode] = useState(false);
+  const [savingExamples, setSavingExamples] = useState(false);
+  const [saveExamplesStatus, setSaveExamplesStatus] = useState(null);
+
   useEffect(() => {
     async function fetchInstructions() {
       try {
@@ -34,7 +39,19 @@ export default function IngresoClinico() {
         console.error("Error loading instructions:", err);
       }
     }
+    async function fetchExamples() {
+      try {
+        const res = await fetch("/api/examples-ingreso");
+        if (res.ok) {
+          const data = await res.json();
+          setExamples(data.examples);
+        }
+      } catch (err) {
+        console.error("Error loading examples:", err);
+      }
+    }
     fetchInstructions();
+    fetchExamples();
   }, []);
 
   const handleSaveInstructions = async () => {
@@ -57,6 +74,29 @@ export default function IngresoClinico() {
       setSaveStatus("error");
     } finally {
       setSavingInstructions(false);
+    }
+  };
+
+  const handleSaveExamples = async () => {
+    setSavingExamples(true);
+    setSaveExamplesStatus(null);
+    try {
+      const res = await fetch("/api/examples-ingreso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ examples }),
+      });
+      if (res.ok) {
+        setSaveExamplesStatus("success");
+        setTimeout(() => setSaveExamplesStatus(null), 3000);
+      } else {
+        setSaveExamplesStatus("error");
+      }
+    } catch (err) {
+      console.error("Error saving examples:", err);
+      setSaveExamplesStatus("error");
+    } finally {
+      setSavingExamples(false);
     }
   };
 
@@ -291,23 +331,79 @@ export default function IngresoClinico() {
               )}
               {activeTab === "examples" && (
                 <div className={styles.examplesContainer}>
-                  {CLINICAL_EXAMPLES_INGRESO.map((example) => (
+                  <div className={styles.instructionsHeader}>
+                    <div className={styles.instructionsToggle}>
+                      <button
+                        className={`${styles.toggleBtn} ${!examplesEditMode ? styles.activeToggle : ""}`}
+                        onClick={() => setExamplesEditMode(false)}
+                      >
+                        Vista Previa
+                      </button>
+                      <button
+                        className={`${styles.toggleBtn} ${examplesEditMode ? styles.activeToggle : ""}`}
+                        onClick={() => setExamplesEditMode(true)}
+                      >
+                        Editar Casos
+                      </button>
+                    </div>
+                    {examplesEditMode && (
+                      <button
+                        className={styles.saveInstructionsBtn}
+                        onClick={handleSaveExamples}
+                        disabled={savingExamples}
+                      >
+                        {savingExamples ? "Guardando..." : "Guardar Cambios"}
+                      </button>
+                    )}
+                  </div>
+
+                  {saveExamplesStatus === "success" && (
+                    <div className={styles.saveStatusSuccess}>
+                      ¡Casos guardados con éxito!
+                    </div>
+                  )}
+                  {saveExamplesStatus === "error" && (
+                    <div className={styles.saveStatusError}>
+                      Error al guardar los casos. Inténtalo nuevamente.
+                    </div>
+                  )}
+
+                  {examples.map((example, index) => (
                     <div key={example.id} className={styles.exampleCard}>
                       <h3 className={styles.exampleTitle}>{example.title}</h3>
                       <p className={styles.exampleSummary}>{example.summary}</p>
-                      <div className={styles.examplePreview}>
-                        {example.text}
-                      </div>
-                      <button
-                        className={styles.loadButton}
-                        onClick={() => handleLoadCase(example.text)}
-                      >
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="9 11 12 14 22 4"></polyline>
-                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                        </svg>
-                        Cargar en Formulario
-                      </button>
+                      
+                      {examplesEditMode ? (
+                        <textarea
+                          className={styles.instructionsEditor}
+                          style={{ minHeight: '150px', marginTop: '10px' }}
+                          value={example.text}
+                          onChange={(e) => {
+                            const newExamples = [...examples];
+                            newExamples[index].text = e.target.value;
+                            setExamples(newExamples);
+                            if (saveExamplesStatus) setSaveExamplesStatus(null);
+                          }}
+                          placeholder="Texto del caso clínico..."
+                        />
+                      ) : (
+                        <div className={styles.examplePreview}>
+                          {example.text}
+                        </div>
+                      )}
+                      
+                      {!examplesEditMode && (
+                        <button
+                          className={styles.loadButton}
+                          onClick={() => handleLoadCase(example.text)}
+                        >
+                          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                          </svg>
+                          Cargar en Formulario
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -167,44 +167,41 @@ export const CLINICAL_EXAMPLES_INGRESO = [
     id: 1,
     title: "Caso 1: Neumonía Complicada con Derrame",
     summary: "Escolar de 8 años derivado de guardia por neumonía basal derecha complicada con derrame pleural paraneumónico. Alérgico a penicilina. Requiere oxígeno por cánula nasal. Pendiente resultado de hemocultivo y ecografía pleural.",
-    text: `Paciente: Escolar de 8 años
-Peso: 25 kg
-Motivo de ingreso: Dificultad respiratoria y fiebre.
-Antecedentes: Alergia documentada a penicilina (rash cutáneo). Asma leve intermitente (usa Salbutamol a demanda).
-Enfermedad actual: Cuadro de 4 días de evolución con fiebre (39°C), tos tusígena y dolor pleurítico derecho. Hoy agrega tiraje subcostal y taquipnea (FR 35).
-Examen físico: Regular estado general. SatO2 91% a aire ambiente. Se coloca Cánula Nasal a 2 L/min mejorando a 95%. Hipoventilación en base derecha con matidez a la percusión.
-Laboratorio: Leucocitos 18.000 (85% neutrófilos), PCR 120. Se tomaron 2 hemocultivos (pendientes).
-Imágenes: Rx tórax de frente: opacidad en base derecha que borra el seno costodiafragmático.
-Pendientes: Ecografía pleural solicitada a diagnóstico por imágenes. Iniciar antibioticoterapia empírica (evaluar alternativas por alergia).`
+    text: `Paciente: Escolar 8 años, peso 25kg
+Motivo de ingreso: Dif resp y sdre febril.
+Antecedentes: asma leve (usa salbutamol a dem), la mama dice q tuvo rash con penicilina de chiquito (ojo alergia pnc).
+Enf actual: cuadro de 4 d de evol con f (picos 39°C), moco, tos tusigena q no cede. dolor pleuritico der. Hoy suma tiraje subcostal y taquipnea FR35.
+Evol de guardia a sala: Pasa a sala en reg estado gral, un poco decaído. SatO2 89-91% a/a. Se pone canulita a 2 l/m y levanta a 95%. Al EF: hipoventilacion franca en base der con matidez y dolor a la percusion/inspiracion.
+Labo: Gb 18k (N 85%), PCR altisima 120. Hemo x 2 (pend).
+Rx tx frente: opacidad base der, borra seno costo diafrag completo.
+Pendientes para hoy: Eco pleural (falta q baje el tecnico de rayos), arrancar atb empirico ya (evaluar ceftria u otro x el tema alergia PNC), mon de O2 y dolor.`
   },
   {
     id: 2,
     title: "Caso 2: Postoperatorio Apendicitis Complicada",
     summary: "Adolescente de 13 años cursando 1er día de postoperatorio de apendicectomía laparoscópica por apendicitis perforada con peritonitis localizada. Portador de drenaje tipo Jackson-Pratt y Vía Venosa Central. Cultivo de líquido peritoneal positivo para E. coli (pendiente antibiograma).",
-    text: `Paciente: Adolescente de 13 años
-Peso: 45 kg
-Motivo de ingreso: Postoperatorio de apendicectomía.
-Antecedentes: Sin antecedentes patológicos de relevancia.
-Enfermedad actual: Cursando PO día 1 de apendicectomía videolaparoscópica de urgencia. Hallazgo intraoperatorio: apendicitis perforada con peritonitis localizada purulenta.
-Dispositivos: Vía Venosa Central de inserción periférica (PICC) en miembro superior derecho. Drenaje abdominal Jackson-Pratt en fosa ilíaca derecha (débito serohemático escaso).
-Evolución: Afebril en las últimas 12 hs. Dolor abdominal controlado con analgesia reglada. Tolerando líquidos claros.
-Infectología: Cultivo de líquido peritoneal (tomado en quirófano) informa desarrollo preliminar de E. coli. Antibiograma en proceso.
-Medicación actual: Ceftriaxona + Metronidazol EV. Analgesia EV.
-Pendientes: Resultado de antibiograma para adecuar tratamiento. Retiro de drenaje si débito <10cc/día.`
+    text: `Pte: adol 13a, 45 kg
+Ingreso por: PO apendicectomía.
+Ant: nada de relev.
+Enf actual: cursando PO dia 1 de apendice vlap de urg ayer a la noche. Cirugia paso sin compl pero hallazgo: apendice perforada + peritonitis local purulenta fulera. 
+Dispositivos: tiene VVC (PICC) en MSD que le pasaron en quirofano y drena JP en FID (debito serohematico escaso, hoy tiro 15cc nomas). 
+Evolucion en sala: pte afebril en las ultimas 12hs. Con mucho dolor abdominal cuando se mueve en la cama, dice q el ibuprofeno y paracetamol no le hacen nada, llora a la movilizacion. Tolerando liquidos (tecitos y agua). 
+Infecto: Cultivo de liq peritoneal que mandaron de quirof dice E coli en el preliminar, falta atbgrama definitivo. 
+Med actual: Ceftria + metronidazol ev. analgesia sos.
+Pendientes: rotar analgesia o subir rescates urgente, ver atbgrama cuando este, si JP sigue <10 evaluar sacarlo mañana.`
   },
   {
     id: 3,
     title: "Caso 3: Cetoacidosis Diabética Leve",
     summary: "Preescolar de 5 años con debut diabético. Presenta Cetoacidosis Diabética (CAD) leve ya compensada en emergencia, sube a sala para transición a insulina subcutánea. Requiere medicación crónica (levotiroxina). Pendiente educación diabetológica a la familia.",
-    text: `Paciente: Preescolar de 5 años
-Peso: 18 kg
-Motivo de ingreso: Debut DBT tipo 1 - Cetoacidosis Diabética.
-Antecedentes: Hipotiroidismo congénito en tratamiento con Levotiroxina 50 mcg/día (crónica imprescindible, no suspender).
-Enfermedad actual: Ingresa por guardia con cuadro de polidipsia, poliuria y pérdida de peso de 3 semanas. Laboratorio de ingreso: Glucemia 450 mg/dL, pH 7.28, HCO3 14 mEq/L, cetonemia positiva. Se manejó como CAD leve.
-Evolución: Recibió expansión con solución fisiológica y luego infusión continua de insulina (0.05 UI/kg/h) con plan de hidratación. Actualmente lúcido, buen estado de hidratación. Último laboratorio: pH 7.35, HCO3 18 mEq/L.
-Dispositivos: Dos vías venosas periféricas.
-Medicación: Insulina regular en bomba de infusión continua.
-Pendientes: Iniciar tolerancia oral. Transición a esquema de insulina subcutánea (NPH/Corriente) una vez tolerada la vía oral. Interconsulta con nutrición y educación diabetológica a padres.`
+    text: `Pte 5 a, 18kg.
+Ingreso: debut dbt 1 - CAD leve.
+Ant: Hipotiroidismo cong, tto con T4 50 mcg/dia (NO SUSPENDER, la mama trajo las pastillas de su casa para darle hoy).
+Enf actual: la madre lo trae a guardia x poliuria, polidipsia y perdida de peso q viene notando hace 3 sem. Labo de ingreso: gluc 450 mg/dl, ph 7.28, hco3 14, cetonas positivas ++. Manejo inicial como CAD leve.
+Evolucion SR a sala: Se le hizo exp 20 cc/kg con fisio y dps php s/ hid + BIC de insulina a 0.05. Ahora esta lucido, hemod estb. Dice q tiene mucha hambre. Labo de control repunto: ph 7.35 hco3 18, iono ok. 
+Disp: 2 VVP (una en MSI medio infiltrada, controlar).
+Med: insu en bomba. levotiroxina.
+Pend: Progresar a tolerancia oral, empezar dieta de dbt. Una vez q tolere, transicionar esquema insu SC (NPH/cte). Interconsulta c/ nutiricion. Llamar a educacion diabetologica pq los padres estan muy asustados y no entienden bien que paso.`
   }
 ];
 
