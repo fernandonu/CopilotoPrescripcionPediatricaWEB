@@ -4,30 +4,28 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import styles from "./page.module.css";
 import {
-  AGENT_INSTRUCTIONS,
-  CLINICAL_EXAMPLES,
-  INTEGRATION_TEXT,
-  DATA_SOURCES_TEXT
-} from "./constants";
+  AGENT_INSTRUCTIONS_INGRESO,
+  CLINICAL_EXAMPLES_INGRESO,
+  INTEGRATION_TEXT_INGRESO,
+  DATA_SOURCES_TEXT_INGRESO
+} from "../constants";
 
-export default function Home() {
+export default function IngresoClinico() {
   const [input, setInput] = useState("");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("sources");
-  const [instructions, setInstructions] = useState(AGENT_INSTRUCTIONS);
+  const [instructions, setInstructions] = useState(AGENT_INSTRUCTIONS_INGRESO);
   const [instructionsEditMode, setInstructionsEditMode] = useState(false);
   const [savingInstructions, setSavingInstructions] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
-  const [suggestedPrescription, setSuggestedPrescription] = useState("");
-  const [isPrescModalOpen, setIsPrescModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchInstructions() {
       try {
-        const res = await fetch("/api/instructions");
+        const res = await fetch("/api/instructions-ingreso");
         if (res.ok) {
           const data = await res.json();
           setInstructions(data.instructions);
@@ -43,7 +41,7 @@ export default function Home() {
     setSavingInstructions(true);
     setSaveStatus(null);
     try {
-      const res = await fetch("/api/instructions", {
+      const res = await fetch("/api/instructions-ingreso", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ instructions }),
@@ -64,31 +62,19 @@ export default function Home() {
 
   const textareaRef = useRef(null);
 
-  const handleConsultarClick = (e) => {
-    if (e) e.preventDefault();
-    if (!input.trim()) return;
-    setIsPrescModalOpen(true);
-  };
-
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!input.trim()) return;
 
-    setIsPrescModalOpen(false);
     setLoading(true);
     setError("");
     setResponse("");
 
-    let finalInput = input;
-    if (suggestedPrescription.trim()) {
-      finalInput += "\n\nprescripcion actual que  realiza el medico: " + suggestedPrescription.trim();
-    }
-
     try {
-      const res = await fetch("/api/prescribe", {
+      const res = await fetch("/api/ingreso", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: finalInput }),
+        body: JSON.stringify({ input }),
       });
 
       if (!res.ok) {
@@ -119,7 +105,6 @@ export default function Home() {
 
   const handleLoadCase = (text) => {
     setInput(text);
-    setSuggestedPrescription("");
     setIsModalOpen(false);
     setTimeout(() => {
       if (textareaRef.current) {
@@ -131,14 +116,14 @@ export default function Home() {
   return (
     <main className={styles.main}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Copiloto Pediátrico de Prescripción</h1>
+        <h1 className={styles.title}>Copiloto Ingreso Clínico</h1>
         <p className={styles.subtitle}>
-          Asistencia rápida y segura para la prescripción pediátrica farmacoterapéutica.
+          Asistencia para la elaboración de ingresos en internación de cuidados intermedios y moderados.
         </p>
       </div>
 
       <div className={styles.container}>
-        <form onSubmit={handleConsultarClick} className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
             <textarea
               ref={textareaRef}
@@ -150,14 +135,14 @@ export default function Home() {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   if (input.trim() && !loading) {
-                    handleConsultarClick(e);
+                    handleSubmit(e);
                   }
                 }
               }}
               disabled={loading}
             />
             <button type="submit" className={styles.button} disabled={loading || !input.trim()}>
-              {loading ? "Consultando..." : "Consultar"}
+              {loading ? "Procesando..." : "Analizar Ingreso"}
             </button>
           </div>
         </form>
@@ -177,7 +162,7 @@ export default function Home() {
 
         {response && (
           <div className={styles.result}>
-            <h3>Resultados de la Prescripción</h3>
+            <h3>Análisis del Ingreso Clínico</h3>
             <div className={styles.content}>
               <ReactMarkdown>{response}</ReactMarkdown>
             </div>
@@ -214,7 +199,7 @@ export default function Home() {
         <div className={styles.overlay} onClick={() => setIsModalOpen(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Guía del Asistente Pediátrico</h2>
+              <h2 className={styles.modalTitle}>Guía del Asistente de Ingreso</h2>
               <button className={styles.closeButton} onClick={() => setIsModalOpen(false)}>
                 &times;
               </button>
@@ -306,7 +291,7 @@ export default function Home() {
               )}
               {activeTab === "examples" && (
                 <div className={styles.examplesContainer}>
-                  {CLINICAL_EXAMPLES.map((example) => (
+                  {CLINICAL_EXAMPLES_INGRESO.map((example) => (
                     <div key={example.id} className={styles.exampleCard}>
                       <h3 className={styles.exampleTitle}>{example.title}</h3>
                       <p className={styles.exampleSummary}>{example.summary}</p>
@@ -329,12 +314,12 @@ export default function Home() {
               )}
               {activeTab === "integration" && (
                 <div className={styles.instructionsText}>
-                  <ReactMarkdown>{INTEGRATION_TEXT}</ReactMarkdown>
+                  <ReactMarkdown>{INTEGRATION_TEXT_INGRESO}</ReactMarkdown>
                 </div>
               )}
               {activeTab === "sources" && (
                 <div className={styles.instructionsText}>
-                  <ReactMarkdown>{DATA_SOURCES_TEXT}</ReactMarkdown>
+                  <ReactMarkdown>{DATA_SOURCES_TEXT_INGRESO}</ReactMarkdown>
                 </div>
               )}
             </div>
@@ -342,41 +327,6 @@ export default function Home() {
             <div className={styles.modalFooter}>
               <button className={styles.closeModalBtn} onClick={() => setIsModalOpen(false)}>
                 Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ventana emergente: Prescripción que sugiere el médico */}
-      {isPrescModalOpen && (
-        <div className={styles.overlay} onClick={() => setIsPrescModalOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Prescripción que sugiere el médico</h2>
-              <button className={styles.closeButton} onClick={() => setIsPrescModalOpen(false)}>
-                &times;
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <p className={styles.modalSubtitle}>
-                Ingrese la prescripción que tiene planeado sugerir para este paciente (opcional). Esta información se sumará al análisis del copiloto.
-              </p>
-              <textarea
-                className={styles.prescEditor}
-                value={suggestedPrescription}
-                onChange={(e) => setSuggestedPrescription(e.target.value)}
-                placeholder="Ej: Levofloxacina 20 mg/kg/día EV c/24h..."
-                rows={5}
-                autoFocus
-              />
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={styles.cancelModalBtn} onClick={() => setIsPrescModalOpen(false)}>
-                Cancelar
-              </button>
-              <button className={styles.confirmModalBtn} onClick={() => handleSubmit()}>
-                Consultar
               </button>
             </div>
           </div>
