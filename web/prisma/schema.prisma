@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PRESCRIPTION
+  ADMISSION
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  username  String   @unique
+  password  String   // Encriptada con bcrypt
+  role      Role     @default(PRESCRIPTION)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  aiAnalysisLogs  AiAnalysisLog[]
+  manualEntryLogs ManualEntryLog[]
+}
+
+model Instruction {
+  id        String   @id @default(cuid())
+  type      String   // 'PRESCRIPTION' or 'ADMISSION'
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClinicalExample {
+  id        String   @id @default(cuid())
+  type      String   @unique // 'PRESCRIPTION' or 'ADMISSION'
+  content   String
+  updatedAt DateTime @updatedAt
+}
+
+model AiAnalysisLog {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  module          String   @default("ADMISSION")
+  startTime       DateTime
+  endTime         DateTime
+  durationSeconds Int
+  durationString  String
+  inputText       String
+  outputText      String
+  createdAt       DateTime @default(now())
+}
+
+model ManualEntryLog {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  module          String   @default("ADMISSION")
+  startTime       DateTime
+  endTime         DateTime
+  durationSeconds Int
+  durationString  String
+  inputText       String
+  createdAt       DateTime @default(now())
+}

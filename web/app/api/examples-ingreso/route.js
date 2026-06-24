@@ -1,22 +1,37 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { PrismaClient } from '@prisma/client';
 import { CLINICAL_EXAMPLES_INGRESO } from '../../constants';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
 
-const FILE_PATH = path.join(process.cwd(), 'examples-ingreso.json');
+const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const data = await fs.readFile(FILE_PATH, 'utf-8');
-    return NextResponse.json({ examples: JSON.parse(data) });
+    const example = await prisma.clinicalExample.findUnique({
+      where: { type: 'ADMISSION' }
+    });
+
+    if (example) {
+      return NextResponse.json({ examples: JSON.parse(example.content) });
+    }
+
+    // Si no existe, devolvemos la constante por defecto
+    return NextResponse.json({ examples: CLINICAL_EXAMPLES_INGRESO });
   } catch (error) {
-    // If the file does not exist, return default examples
+    console.error('Error fetching examples:', error);
     return NextResponse.json({ examples: CLINICAL_EXAMPLES_INGRESO });
   }
 }
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ADMISSION")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+
     const body = await request.json();
     const { examples } = body;
 
@@ -24,7 +39,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Examples must be an array' }, { status: 400 });
     }
 
-    await fs.writeFile(FILE_PATH, JSON.stringify(examples, null, 2), 'utf-8');
+    const content = JSON.stringify(examples, null, 2);
+
+    await prisma.clinicalExample.upsert({
+      where: { type: 'ADMISSION' },
+      update: { content },
+      create: { type: 'ADMISSION', content }
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error saving examples:', error);

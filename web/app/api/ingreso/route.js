@@ -1,13 +1,16 @@
 import OpenAI from 'openai';
-import fs from 'fs/promises';
-import path from 'path';
+import { PrismaClient } from '@prisma/client';
 import { AGENT_INSTRUCTIONS_INGRESO } from '../../constants';
 
-const FILE_PATH = path.join(process.cwd(), 'instructions-ingreso.txt');
+const prisma = new PrismaClient();
 
 async function getInstructions() {
   try {
-    return await fs.readFile(FILE_PATH, 'utf-8');
+    const instruction = await prisma.instruction.findFirst({
+      where: { type: 'ADMISSION' },
+      orderBy: { createdAt: 'desc' }
+    });
+    return instruction ? instruction.content : AGENT_INSTRUCTIONS_INGRESO;
   } catch (error) {
     return AGENT_INSTRUCTIONS_INGRESO;
   }

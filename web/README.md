@@ -36,3 +36,14 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+Acceso a la base de datos
+POSTGRES_SERVER: str = "localhost"
+POSTGRES_USER: str = "fer"
+POSTGRES_PASSWORD: str = "cache8080"
+POSTGRES_DB: str = "copiloto_garrahan"
+POSTGRES_PORT: str = "5432"
+
+Usuario admin de la aplicacion
+Usuario: "admin"
+Contraseña: "admin123"

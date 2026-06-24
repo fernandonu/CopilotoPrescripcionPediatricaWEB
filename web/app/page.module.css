@@ -605,4 +605,75 @@
 
 .confirmModalBtn:hover {
   background-color: var(--primary-hover);
-}
+}
+
+/* History Viewer Styles */
+.historyContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.historyTitle {
+  color: #60a5fa;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 0.5rem;
+}
+
+.historyTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+}
+
+.historyTimeline::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.historyCard {
+  position: relative;
+  padding-left: 2rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.historyCard::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.8);
+}
+
+.historyDate {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.historyText {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+  font-family: inherit;
+  line-height: 1.5;
+}
+

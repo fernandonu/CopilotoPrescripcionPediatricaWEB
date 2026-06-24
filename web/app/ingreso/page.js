@@ -10,17 +10,30 @@ import {
   DATA_SOURCES_TEXT_INGRESO
 } from "../constants";
 
+import ManualEntry from "./components/ManualEntry";
+import Dashboard from "./components/Dashboard";
+import HistoryViewer from "./components/HistoryViewer";
+
 export default function IngresoClinico() {
+  const [mainTab, setMainTab] = useState("AI"); // 'AI' | 'MANUAL' | 'HISTORY' | 'DASHBOARD'
+  
   const [input, setInput] = useState("");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("sources");
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+  const originalInputRef = useRef("");
   const [instructions, setInstructions] = useState(AGENT_INSTRUCTIONS_INGRESO);
   const [instructionsEditMode, setInstructionsEditMode] = useState(false);
   const [savingInstructions, setSavingInstructions] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
+  
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyData, setHistoryData] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const [examples, setExamples] = useState(CLINICAL_EXAMPLES_INGRESO);
   const [examplesEditMode, setExamplesEditMode] = useState(false);
@@ -66,6 +79,7 @@ export default function IngresoClinico() {
       if (res.ok) {
         setSaveStatus("success");
         setTimeout(() => setSaveStatus(null), 3000);
+        if (showHistory) fetchHistory();
       } else {
         setSaveStatus("error");
       }
@@ -75,6 +89,29 @@ export default function IngresoClinico() {
     } finally {
       setSavingInstructions(false);
     }
+  };
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch("/api/instructions-ingreso/history");
+      if (res.ok) {
+        const data = await res.json();
+        setHistoryData(data.history || []);
+      }
+    } catch (err) {
+      console.error("Error loading history:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleToggleHistory = () => {
+    if (!showHistory) {
+      fetchHistory();
+    }
+    setShowHistory(!showHistory);
+    setInstructionsEditMode(false);
   };
 
   const handleSaveExamples = async () => {
@@ -102,6 +139,57 @@ export default function IngresoClinico() {
 
   const textareaRef = useRef(null);
 
+  const toggleListening = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Tu navegador no soporta el reconocimiento de voz. Te recomendamos usar Google Chrome o Microsoft Edge.");
+      return;
+    }
+
+    originalInputRef.current = input + (input.trim() ? " " : "");
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-AR";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => setIsListening(true);
+    
+    recognition.onresult = (event) => {
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        interimTranscript += event.results[i][0].transcript;
+      }
+      setInput(originalInputRef.current + interimTranscript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      if (event.error === 'audio-capture') {
+        alert("No se detectó ningún micrófono. Asegúrate de que el micrófono esté conectado y configurado en tu sistema operativo.");
+      } else if (event.error === 'not-allowed') {
+        alert("Permiso denegado para usar el micrófono. Debes permitir el acceso en la barra de direcciones de tu navegador.");
+      } else {
+        alert("Error de reconocimiento de voz: " + event.error);
+      }
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!input.trim()) return;
@@ -109,6 +197,8 @@ export default function IngresoClinico() {
     setLoading(true);
     setError("");
     setResponse("");
+
+    const startTime = new Date();
 
     try {
       const res = await fetch("/api/ingreso", {
@@ -136,6 +226,25 @@ export default function IngresoClinico() {
           setResponse(accumulatedText);
         }
       }
+      
+      const endTime = new Date();
+      const durationSeconds = Math.round((endTime - startTime) / 1000);
+      
+      // Enviar log
+      await fetch("/api/logs/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          durationSeconds,
+          durationString: `${Math.floor(durationSeconds/3600).toString().padStart(2,'0')}:${Math.floor((durationSeconds%3600)/60).toString().padStart(2,'0')}:${(durationSeconds%60).toString().padStart(2,'0')}`,
+          inputText: input,
+          outputText: accumulatedText,
+          module: "ADMISSION"
+        })
+      });
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -162,52 +271,97 @@ export default function IngresoClinico() {
         </p>
       </div>
 
-      <div className={styles.container}>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.inputGroup}>
-            <textarea
-              ref={textareaRef}
-              className={styles.textarea}
-              placeholder="Para simular cargar datos de la HC. (Presiona Enter para enviar, Shift+Enter para nueva línea)"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (input.trim() && !loading) {
-                    handleSubmit(e);
-                  }
-                }
-              }}
-              disabled={loading}
-            />
-            <button type="submit" className={styles.button} disabled={loading || !input.trim()}>
-              {loading ? "Procesando..." : "Analizar Ingreso"}
-            </button>
-          </div>
-        </form>
+      <div className={styles.mainTabs}>
+        <button className={`${styles.mainTabBtn} ${mainTab === "AI" ? styles.activeMainTab : ""}`} onClick={() => setMainTab("AI")}>
+          Asistente IA
+        </button>
+        <button className={`${styles.mainTabBtn} ${mainTab === "MANUAL" ? styles.activeMainTab : ""}`} onClick={() => setMainTab("MANUAL")}>
+          Carga Manual
+        </button>
+        <button className={`${styles.mainTabBtn} ${mainTab === "HISTORY" ? styles.activeMainTab : ""}`} onClick={() => setMainTab("HISTORY")}>
+          Historiales
+        </button>
+        <button className={`${styles.mainTabBtn} ${mainTab === "DASHBOARD" ? styles.activeMainTab : ""}`} onClick={() => setMainTab("DASHBOARD")}>
+          Dashboard Analítico
+        </button>
+      </div>
 
-        {loading && (
-          <div className={styles.loader}>
-            <div className={styles.spinner}></div>
-          </div>
+      <div className={`${styles.container} ${mainTab === "HISTORY" || mainTab === "DASHBOARD" ? styles.wideContainer : ""}`}>
+        {mainTab === "AI" && (
+          <>
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.inputGroup}>
+                <textarea
+                  ref={textareaRef}
+                  className={styles.textarea}
+                  placeholder="Para simular cargar datos de la HC. (Presiona Enter para enviar, Shift+Enter para nueva línea)"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (input.trim() && !loading) {
+                        handleSubmit(e);
+                      }
+                    }
+                  }}
+                  disabled={loading}
+                />
+                <div className={styles.buttonGroup}>
+                  <button
+                    type="button"
+                    className={`${styles.micButton} ${isListening ? styles.listening : ""}`}
+                    onClick={toggleListening}
+                    title={isListening ? "Detener dictado" : "Iniciar dictado por voz"}
+                  >
+                    {isListening ? (
+                      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                      </svg>
+                    )}
+                  </button>
+                  <button type="submit" className={styles.button} disabled={loading || !input.trim()}>
+                    {loading ? "Procesando..." : "Analizar Ingreso"}
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {loading && (
+              <div className={styles.loader}>
+                <div className={styles.spinner}></div>
+              </div>
+            )}
+
+            {error && (
+              <div className={styles.result} style={{ color: "#ef4444" }}>
+                <h3>Error</h3>
+                <p>{error}</p>
+              </div>
+            )}
+
+            {response && (
+              <div className={styles.result}>
+                <h3>Análisis del Ingreso Clínico</h3>
+                <div className={styles.content}>
+                  <ReactMarkdown>{response}</ReactMarkdown>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {error && (
-          <div className={styles.result} style={{ color: "#ef4444" }}>
-            <h3>Error</h3>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {response && (
-          <div className={styles.result}>
-            <h3>Análisis del Ingreso Clínico</h3>
-            <div className={styles.content}>
-              <ReactMarkdown>{response}</ReactMarkdown>
-            </div>
-          </div>
-        )}
+        {mainTab === "MANUAL" && <ManualEntry />}
+        {mainTab === "HISTORY" && <HistoryViewer />}
+        {mainTab === "DASHBOARD" && <Dashboard />}
       </div>
 
       {/* Floating Action Button (FAB) */}
@@ -285,9 +439,18 @@ export default function IngresoClinico() {
                       </button>
                       <button
                         className={`${styles.toggleBtn} ${instructionsEditMode ? styles.activeToggle : ""}`}
-                        onClick={() => setInstructionsEditMode(true)}
+                        onClick={() => {
+                          setInstructionsEditMode(true);
+                          setShowHistory(false);
+                        }}
                       >
                         Editar
+                      </button>
+                      <button
+                        className={`${styles.toggleBtn} ${showHistory ? styles.activeToggle : ""}`}
+                        onClick={handleToggleHistory}
+                      >
+                        Ver Historial
                       </button>
                     </div>
                     {instructionsEditMode && (
@@ -312,7 +475,29 @@ export default function IngresoClinico() {
                     </div>
                   )}
 
-                  {instructionsEditMode ? (
+                  {showHistory ? (
+                    <div className={styles.historyContainer}>
+                      <h3 className={styles.historyTitle}>Historial de Versiones</h3>
+                      {loadingHistory ? (
+                        <p>Cargando historial...</p>
+                      ) : historyData.length === 0 ? (
+                        <p>No hay versiones anteriores.</p>
+                      ) : (
+                        <div className={styles.historyTimeline}>
+                          {historyData.map((item) => (
+                            <div key={item.id} className={styles.historyCard}>
+                              <div className={styles.historyDate}>
+                                {new Date(item.createdAt).toLocaleString()}
+                              </div>
+                              <div className={styles.historyText}>
+                                <ReactMarkdown>{item.content}</ReactMarkdown>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : instructionsEditMode ? (
                     <textarea
                       className={styles.instructionsEditor}
                       value={instructions}

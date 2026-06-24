@@ -21,6 +21,10 @@ export default function Home() {
   const [instructionsEditMode, setInstructionsEditMode] = useState(false);
   const [savingInstructions, setSavingInstructions] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
+  
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyData, setHistoryData] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const [examples, setExamples] = useState(CLINICAL_EXAMPLES);
   const [examplesEditMode, setExamplesEditMode] = useState(false);
@@ -69,6 +73,8 @@ export default function Home() {
       if (res.ok) {
         setSaveStatus("success");
         setTimeout(() => setSaveStatus(null), 3000);
+        // Recargar el historial si estaba abierto
+        if (showHistory) fetchHistory();
       } else {
         setSaveStatus("error");
       }
@@ -78,6 +84,29 @@ export default function Home() {
     } finally {
       setSavingInstructions(false);
     }
+  };
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch("/api/instructions/history");
+      if (res.ok) {
+        const data = await res.json();
+        setHistoryData(data.history || []);
+      }
+    } catch (err) {
+      console.error("Error loading history:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleToggleHistory = () => {
+    if (!showHistory) {
+      fetchHistory();
+    }
+    setShowHistory(!showHistory);
+    setInstructionsEditMode(false);
   };
 
   const handleSaveExamples = async () => {
@@ -301,9 +330,18 @@ export default function Home() {
                       </button>
                       <button
                         className={`${styles.toggleBtn} ${instructionsEditMode ? styles.activeToggle : ""}`}
-                        onClick={() => setInstructionsEditMode(true)}
+                        onClick={() => {
+                          setInstructionsEditMode(true);
+                          setShowHistory(false);
+                        }}
                       >
                         Editar
+                      </button>
+                      <button
+                        className={`${styles.toggleBtn} ${showHistory ? styles.activeToggle : ""}`}
+                        onClick={handleToggleHistory}
+                      >
+                        Ver Historial
                       </button>
                     </div>
                     {instructionsEditMode && (
@@ -328,7 +366,29 @@ export default function Home() {
                     </div>
                   )}
 
-                  {instructionsEditMode ? (
+                  {showHistory ? (
+                    <div className={styles.historyContainer}>
+                      <h3 className={styles.historyTitle}>Historial de Versiones</h3>
+                      {loadingHistory ? (
+                        <p>Cargando historial...</p>
+                      ) : historyData.length === 0 ? (
+                        <p>No hay versiones anteriores.</p>
+                      ) : (
+                        <div className={styles.historyTimeline}>
+                          {historyData.map((item) => (
+                            <div key={item.id} className={styles.historyCard}>
+                              <div className={styles.historyDate}>
+                                {new Date(item.createdAt).toLocaleString()}
+                              </div>
+                              <div className={styles.historyText}>
+                                <ReactMarkdown>{item.content}</ReactMarkdown>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : instructionsEditMode ? (
                     <textarea
                       className={styles.instructionsEditor}
                       value={instructions}
