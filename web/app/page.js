@@ -15,6 +15,10 @@ export default function Home() {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [currentLogId, setCurrentLogId] = useState(null);
+  const [rating, setRating] = useState(0);
+  const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
+  const [ratingSuccess, setRatingSuccess] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("sources");
   const [instructions, setInstructions] = useState(AGENT_INSTRUCTIONS);
@@ -148,6 +152,11 @@ export default function Home() {
     setLoading(true);
     setError("");
     setResponse("");
+    setCurrentLogId(null);
+    setRating(0);
+    setRatingSuccess(false);
+
+    const startTime = new Date();
 
     let finalInput = input;
     if (suggestedPrescription.trim()) {
@@ -180,10 +189,54 @@ export default function Home() {
           setResponse(accumulatedText);
         }
       }
+      
+      const endTime = new Date();
+      const durationSeconds = Math.round((endTime - startTime) / 1000);
+      
+      // Enviar log
+      const logRes = await fetch("/api/logs/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          durationSeconds,
+          durationString: `${Math.floor(durationSeconds/3600).toString().padStart(2,'0')}:${Math.floor((durationSeconds%3600)/60).toString().padStart(2,'0')}:${(durationSeconds%60).toString().padStart(2,'0')}`,
+          inputText: finalInput,
+          outputText: accumulatedText,
+          module: "PRESCRIPTION"
+        })
+      });
+      if (logRes.ok) {
+        const logData = await logRes.json();
+        setCurrentLogId(logData.logId);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRating = async (value) => {
+    if (!currentLogId || isRatingSubmitting) return;
+    setIsRatingSubmitting(true);
+    setRating(value);
+    
+    try {
+      const res = await fetch("/api/logs/ai/rating", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logId: currentLogId, rating: value }),
+      });
+      
+      if (res.ok) {
+        setRatingSuccess(true);
+      }
+    } catch (err) {
+      console.error("Error al enviar la valoración:", err);
+    } finally {
+      setIsRatingSubmitting(false);
     }
   };
 
@@ -251,6 +304,37 @@ export default function Home() {
             <div className={styles.content}>
               <ReactMarkdown>{response}</ReactMarkdown>
             </div>
+            
+            {currentLogId && (
+              <div style={{ marginTop: '20px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                <h4 style={{ marginBottom: '10px', color: '#334155', fontSize: '15px' }}>¿Qué tan útil fue esta respuesta?</h4>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => handleRating(star)}
+                      disabled={isRatingSubmitting || ratingSuccess}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: (isRatingSubmitting || ratingSuccess) ? 'default' : 'pointer',
+                        color: star <= rating ? '#eab308' : '#cbd5e1',
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseEnter={(e) => { if (!ratingSuccess && !isRatingSubmitting) e.currentTarget.style.color = '#eab308'; }}
+                      onMouseLeave={(e) => { if (!ratingSuccess && !isRatingSubmitting) e.currentTarget.style.color = star <= rating ? '#eab308' : '#cbd5e1'; }}
+                    >
+                      <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill={star <= rating ? '#eab308' : 'none'} strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+                {ratingSuccess && (
+                  <p style={{ marginTop: '10px', color: '#16a34a', fontSize: '14px', fontWeight: '500' }}>¡Gracias por tu valoración!</p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

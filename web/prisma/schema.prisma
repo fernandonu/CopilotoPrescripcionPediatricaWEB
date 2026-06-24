@@ -53,6 +53,7 @@ model AiAnalysisLog {
   durationString  String
   inputText       String
   outputText      String
+  rating          Int?     // Valoración de la respuesta de 1 a 5 estrellas
   createdAt       DateTime @default(now())
 }
 

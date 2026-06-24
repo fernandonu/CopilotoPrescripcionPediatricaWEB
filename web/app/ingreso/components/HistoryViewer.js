@@ -44,6 +44,7 @@ export default function HistoryViewer() {
               <th>Fecha/Hora</th>
               <th>Usuario</th>
               <th>Duración</th>
+              {isAi && <th>Valoración</th>}
               <th>Acción</th>
             </tr>
           </thead>
@@ -53,6 +54,17 @@ export default function HistoryViewer() {
                 <td>{new Date(log.createdAt).toLocaleString()}</td>
                 <td>{log.user?.name || log.userId}</td>
                 <td>{log.durationString || formatSecs(log.durationSeconds)}</td>
+                {isAi && (
+                  <td>
+                    {log.rating ? (
+                      <span style={{ color: '#eab308', letterSpacing: '2px' }} title={`${log.rating} de 5`}>
+                        {'★'.repeat(log.rating)}{'☆'.repeat(5 - log.rating)}
+                      </span>
+                    ) : (
+                      <span style={{ color: '#94a3b8', fontSize: '12px' }}>Sin calificar</span>
+                    )}
+                  </td>
+                )}
                 <td><button className={styles.viewDetailBtn}>Ver Detalle</button></td>
               </tr>
             ))}
@@ -105,7 +117,17 @@ export default function HistoryViewer() {
 
               {selectedLog.isAi && (
                 <div className={styles.detailSection}>
-                  <h4>Respuesta de la IA</h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4>Respuesta de la IA</h4>
+                    {selectedLog.rating && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>Valoración del usuario:</span>
+                        <span style={{ color: '#eab308', fontSize: '20px', letterSpacing: '2px' }} title={`Valoración: ${selectedLog.rating} de 5`}>
+                          {'★'.repeat(selectedLog.rating)}{'☆'.repeat(5 - selectedLog.rating)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   <div className={styles.detailBox}>
                     <ReactMarkdown>{selectedLog.outputText}</ReactMarkdown>
                   </div>

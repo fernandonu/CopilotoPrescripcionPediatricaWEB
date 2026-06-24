@@ -13,12 +13,17 @@ import {
 import ManualEntry from "./components/ManualEntry";
 import Dashboard from "./components/Dashboard";
 import HistoryViewer from "./components/HistoryViewer";
+import RatingDashboard from "./components/RatingDashboard";
 
 export default function IngresoClinico() {
   const [mainTab, setMainTab] = useState("AI"); // 'AI' | 'MANUAL' | 'HISTORY' | 'DASHBOARD'
   
   const [input, setInput] = useState("");
   const [response, setResponse] = useState(null);
+  const [currentLogId, setCurrentLogId] = useState(null);
+  const [rating, setRating] = useState(0);
+  const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
+  const [ratingSuccess, setRatingSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -197,6 +202,9 @@ export default function IngresoClinico() {
     setLoading(true);
     setError("");
     setResponse("");
+    setCurrentLogId(null);
+    setRating(0);
+    setRatingSuccess(false);
 
     const startTime = new Date();
 
@@ -231,7 +239,7 @@ export default function IngresoClinico() {
       const durationSeconds = Math.round((endTime - startTime) / 1000);
       
       // Enviar log
-      await fetch("/api/logs/ai", {
+      const logRes = await fetch("/api/logs/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -244,11 +252,37 @@ export default function IngresoClinico() {
           module: "ADMISSION"
         })
       });
+      if (logRes.ok) {
+        const logData = await logRes.json();
+        setCurrentLogId(logData.logId);
+      }
 
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRating = async (value) => {
+    if (!currentLogId || isRatingSubmitting) return;
+    setIsRatingSubmitting(true);
+    setRating(value);
+    
+    try {
+      const res = await fetch("/api/logs/ai/rating", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logId: currentLogId, rating: value }),
+      });
+      
+      if (res.ok) {
+        setRatingSuccess(true);
+      }
+    } catch (err) {
+      console.error("Error al enviar la valoración:", err);
+    } finally {
+      setIsRatingSubmitting(false);
     }
   };
 
@@ -284,9 +318,12 @@ export default function IngresoClinico() {
         <button className={`${styles.mainTabBtn} ${mainTab === "DASHBOARD" ? styles.activeMainTab : ""}`} onClick={() => setMainTab("DASHBOARD")}>
           Dashboard Analítico
         </button>
+        <button className={`${styles.mainTabBtn} ${mainTab === "RATING_STATS" ? styles.activeMainTab : ""}`} onClick={() => setMainTab("RATING_STATS")}>
+          Evolución Comportamiento
+        </button>
       </div>
 
-      <div className={`${styles.container} ${mainTab === "HISTORY" || mainTab === "DASHBOARD" ? styles.wideContainer : ""}`}>
+      <div className={`${styles.container} ${mainTab === "HISTORY" || mainTab === "DASHBOARD" || mainTab === "RATING_STATS" ? styles.wideContainer : ""}`}>
         {mainTab === "AI" && (
           <>
             <form onSubmit={handleSubmit} className={styles.form}>
@@ -354,6 +391,37 @@ export default function IngresoClinico() {
                 <div className={styles.content}>
                   <ReactMarkdown>{response}</ReactMarkdown>
                 </div>
+                
+                {currentLogId && (
+                  <div style={{ marginTop: '20px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                    <h4 style={{ marginBottom: '10px', color: '#334155', fontSize: '15px' }}>¿Qué tan útil fue esta respuesta?</h4>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => handleRating(star)}
+                          disabled={isRatingSubmitting || ratingSuccess}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: (isRatingSubmitting || ratingSuccess) ? 'default' : 'pointer',
+                            color: star <= rating ? '#eab308' : '#cbd5e1',
+                            transition: 'color 0.2s'
+                          }}
+                          onMouseEnter={(e) => { if (!ratingSuccess && !isRatingSubmitting) e.currentTarget.style.color = '#eab308'; }}
+                          onMouseLeave={(e) => { if (!ratingSuccess && !isRatingSubmitting) e.currentTarget.style.color = star <= rating ? '#eab308' : '#cbd5e1'; }}
+                        >
+                          <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill={star <= rating ? '#eab308' : 'none'} strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                    {ratingSuccess && (
+                      <p style={{ marginTop: '10px', color: '#16a34a', fontSize: '14px', fontWeight: '500' }}>¡Gracias por tu valoración!</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -362,6 +430,7 @@ export default function IngresoClinico() {
         {mainTab === "MANUAL" && <ManualEntry />}
         {mainTab === "HISTORY" && <HistoryViewer />}
         {mainTab === "DASHBOARD" && <Dashboard />}
+        {mainTab === "RATING_STATS" && <RatingDashboard />}
       </div>
 
       {/* Floating Action Button (FAB) */}
