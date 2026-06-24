@@ -296,6 +296,16 @@ export default function IngresoClinico() {
     }, 100);
   };
 
+  const handleClear = () => {
+    setInput("");
+    setResponse(null);
+    setCurrentLogId(null);
+    setError("");
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
   return (
     <main className={styles.main}>
       <div className={styles.header}>
@@ -364,6 +374,16 @@ export default function IngresoClinico() {
                         <line x1="8" y1="23" x2="16" y2="23"></line>
                       </svg>
                     )}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.button}
+                    onClick={handleClear}
+                    disabled={loading || (!input.trim() && !response)}
+                    style={{ backgroundColor: '#ef4444' }}
+                    title="Limpiar consulta"
+                  >
+                    Limpiar
                   </button>
                   <button type="submit" className={styles.button} disabled={loading || !input.trim()}>
                     {loading ? "Procesando..." : "Analizar Ingreso"}
