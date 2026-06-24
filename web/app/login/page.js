@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import "./login.css";
 
@@ -27,7 +27,12 @@ export default function LoginPage() {
       setError("Credenciales incorrectas. Por favor, intente de nuevo.");
       setIsLoading(false);
     } else {
-      window.location.href = "/";
+      const session = await getSession();
+      if (session?.user?.role === 'ADMISSION') {
+        window.location.href = "/ingreso";
+      } else {
+        window.location.href = "/";
+      }
     }
   };
 
