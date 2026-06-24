@@ -27,8 +27,7 @@ export default function LoginPage() {
       setError("Credenciales incorrectas. Por favor, intente de nuevo.");
       setIsLoading(false);
     } else {
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     }
   };
 
