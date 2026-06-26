@@ -17,9 +17,10 @@ import RatingDashboard from "./components/RatingDashboard";
 
 export default function IngresoClinico() {
   const [mainTab, setMainTab] = useState("AI"); // 'AI' | 'MANUAL' | 'HISTORY' | 'DASHBOARD'
-  
+
   const [input, setInput] = useState("");
   const [response, setResponse] = useState(null);
+  const [copied, setCopied] = useState(false);
   const [currentLogId, setCurrentLogId] = useState(null);
   const [rating, setRating] = useState(0);
   const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
@@ -35,7 +36,7 @@ export default function IngresoClinico() {
   const [instructionsEditMode, setInstructionsEditMode] = useState(false);
   const [savingInstructions, setSavingInstructions] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
-  
+
   const [showHistory, setShowHistory] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -166,7 +167,7 @@ export default function IngresoClinico() {
     recognition.interimResults = true;
 
     recognition.onstart = () => setIsListening(true);
-    
+
     recognition.onresult = (event) => {
       let interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -234,10 +235,10 @@ export default function IngresoClinico() {
           setResponse(accumulatedText);
         }
       }
-      
+
       const endTime = new Date();
       const durationSeconds = Math.round((endTime - startTime) / 1000);
-      
+
       // Enviar log
       const logRes = await fetch("/api/logs/ai", {
         method: "POST",
@@ -246,7 +247,7 @@ export default function IngresoClinico() {
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
           durationSeconds,
-          durationString: `${Math.floor(durationSeconds/3600).toString().padStart(2,'0')}:${Math.floor((durationSeconds%3600)/60).toString().padStart(2,'0')}:${(durationSeconds%60).toString().padStart(2,'0')}`,
+          durationString: `${Math.floor(durationSeconds / 3600).toString().padStart(2, '0')}:${Math.floor((durationSeconds % 3600) / 60).toString().padStart(2, '0')}:${(durationSeconds % 60).toString().padStart(2, '0')}`,
           inputText: input,
           outputText: accumulatedText,
           module: "ADMISSION"
@@ -268,14 +269,14 @@ export default function IngresoClinico() {
     if (!currentLogId || isRatingSubmitting) return;
     setIsRatingSubmitting(true);
     setRating(value);
-    
+
     try {
       const res = await fetch("/api/logs/ai/rating", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ logId: currentLogId, rating: value }),
       });
-      
+
       if (res.ok) {
         setRatingSuccess(true);
       }
@@ -303,6 +304,17 @@ export default function IngresoClinico() {
     setError("");
     if (textareaRef.current) {
       textareaRef.current.focus();
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!response) return;
+    try {
+      await navigator.clipboard.writeText(response);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Error al copiar:", err);
     }
   };
 
@@ -407,11 +419,50 @@ export default function IngresoClinico() {
 
             {response && (
               <div className={styles.result}>
-                <h3>Análisis del Ingreso Clínico</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h3 style={{ margin: 0 }}>Análisis del Ingreso Clínico</h3>
+                  <button
+                    onClick={handleCopy}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: copied ? '#10b981' : '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '14px',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      transition: 'all 0.2s ease',
+                      backgroundColor: copied ? '#ecfdf5' : 'transparent'
+                    }}
+                    onMouseEnter={(e) => { if (!copied) e.currentTarget.style.backgroundColor = '#f1f5f9'; }}
+                    onMouseLeave={(e) => { if (!copied) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                    title="Copiar resultado al portapapeles"
+                  >
+                    {copied ? (
+                      <>
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Copiado
+                      </>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copiar
+                      </>
+                    )}
+                  </button>
+                </div>
                 <div className={styles.content}>
                   <ReactMarkdown>{response}</ReactMarkdown>
                 </div>
-                
+
                 {currentLogId && (
                   <div style={{ marginTop: '20px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
                     <h4 style={{ marginBottom: '10px', color: '#334155', fontSize: '15px' }}>¿Qué tan útil fue esta respuesta?</h4>
@@ -646,7 +697,7 @@ export default function IngresoClinico() {
                     <div key={example.id} className={styles.exampleCard}>
                       <h3 className={styles.exampleTitle}>{example.title}</h3>
                       <p className={styles.exampleSummary}>{example.summary}</p>
-                      
+
                       {examplesEditMode ? (
                         <textarea
                           className={styles.instructionsEditor}
@@ -665,7 +716,7 @@ export default function IngresoClinico() {
                           {example.text}
                         </div>
                       )}
-                      
+
                       {!examplesEditMode && (
                         <button
                           className={styles.loadButton}
